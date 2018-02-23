@@ -47,11 +47,27 @@ class n_maze():
 				if dim == self.dimensions[i] - 1 or dim == 0 :
 					self.maze[index] = 1
 
+	def addEntrance(self):
+		c = self.rndBorderCell()
+		while (self.maze[c] == 2 or self.maze[c] == 3):
+			c = self.rndBorderCell()
+		self.maze[c] = 2
+
+	def addExit(self):
+		c = self.rndBorderCell()
+		while (self.maze[c] == 2 or self.maze[c] == 3):
+			c = self.rndBorderCell()
+		self.maze[c] = 3
+
+	def addEntranceAndExit(self):
+		self.addEntrance()
+		self.addExit()
+
 	def densityIsland(self, complexity=.5, density=.95): #TODO fix for n dimensions
 		# Only odd shapes
-		shape = ((self.dimensions[0] // 2) * 2 + 1, (self.dimensions[1] // 2) * 2 + 1)
+		shape = list((x // 2) * 2 + 1 for x in self.dimensions)
 		# Adjust complexity and density relative to maze size
-		complexity = int(complexity * (5 * (shape[0] + shape[1])))
+		complexity = int(complexity * (5 * (sum(shape))))
 		density	= int(density * ((shape[0] // 2) * (shape[1] // 2)))
 		# Build actual maze
 		self.maze = np.zeros(shape, dtype=bool)
@@ -59,24 +75,29 @@ class n_maze():
 		self.fillBorders()
 		# Make aisles
 		for i in range(density):
+			# variables = list(randint(0, self.dimensions[1] // 2) * 2 for e in reversed(self.dimensions))
 			x, y = randint(0, shape[1] // 2) * 2, randint(0, shape[0] // 2) * 2
-			self.maze[y, x] = 1
+			# self.maze[reversed(variables)] = 1
+			self.maze[y,x] = 1
 			for j in range(complexity):
-				neighbours = []
+				neighbors = []
+				# for k in variables:
 				if x > 1:
-					neighbours.append((y, x - 2))
+					neighbors.append((y, x - 2))
 				if x < shape[1] - 2:
-					neighbours.append((y, x + 2))
+					neighbors.append((y, x + 2))
 				if y > 1:
-					neighbours.append((y - 2, x))
+					neighbors.append((y - 2, x))
 				if y < shape[0] - 2:
-					neighbours.append((y + 2, x))
-				if len(neighbours):
-					y_,x_ = neighbours[randint(0, len(neighbours) - 1)]
-					if self.maze[y_, x_] == 0:
-						self.maze[y_, x_] = 1
+					neighbors.append((y + 2, x))
+				if len(neighbors):
+					# variables2 = neighbors[randint(0, len(neighbors) - 1)]
+					y_,x_ = neighbors[randint(0, len(neighbors) - 1)]
+					if self.maze[y_,x_] == 0:
+						self.maze[y_,x_] = 1
 						self.maze[y_ + (y - y_) // 2, x_ + (x - x_) // 2] = 1
-						x, y = x_, y_
+						x,y = x_,y_ # reversed(variables2)
+		self.addEntranceAndExit()
 
 	def monteCarloMaze(self, density=.1):
 		for index, x in np.ndenumerate(self.maze):
@@ -86,12 +107,6 @@ class n_maze():
 			else:
 				self.maze[index] = 0
 
-	def reset(self, fill=1):
-		if fill==1:
-			self.maze = np.ones(dimensions)
-		else:
-			self.maze = np.zeros(dimensions)
-
 	def getAllBorderCells(self):
 		border_cells = []
 		for index, val in np.ndenumerate(self.maze):
@@ -100,26 +115,56 @@ class n_maze():
 					border_cells.append(index)
 		return border_cells
 
-	def getBorderCell(self):
+	def excludeCorners(self, indexes):
+		result = []
+		for cell_index in indexes:
+			cell_is_corner = True
+			for i, index_num in enumerate(cell_index):
+				if index_num != 0 and index_num != self.dimensions[i] - 1:
+					cell_is_corner = False
+					break
+			if cell_is_corner == False:
+				result.append(cell_index)
+		return result
+
+	def rndBorderCell(self):
 		border_cells = self.getAllBorderCells()
-		rnd = randint(0,len(border_cells)-1)
-		return border_cells[rnd]
+		no_corners = self.excludeCorners(border_cells)
+		rnd = randint(0,len(no_corners)-1)
+		return no_corners[rnd]
 
-	def addEntrance(self):
-		c = self.getBorderCell()
-		while (self.maze[c] == 2 or self.maze[c] == 3):
-			c = self.getBorderSquare()
-		self.maze[c] = 2
+	def checkerboardMaze(self):
+		for index, x in np.ndenumerate(self.maze):
+			if sum(index) % 2 == 0:
+				self.maze[index] = 1
+			else:
+				self.maze[index] = 0
 
-	def addExit(self):
-		c = self.getBorderCell()
-		while (self.maze[c] == 2 or self.maze[c] == 3):
-			c = self.getBorderCell()
-		self.maze[c] = 3
+	def getAllCoordsOf(self, types):
+		result = []
+		for index, val in np.ndenumerate(self.maze):
+			if self.maze[index] in types:
+				result.append(index)
+		return result
 
-	def addEntranceAndExit(self):
-		self.addEntrance()
-		self.addExit()
+	def bruteForceStep(self, low_threshold=0, high_threshold=1, paths_connect = True, walls_connect = True):
+		self.checkerboardMaze()
+		self.fillBorders()
+		self.addEntranceAndExit()
+		cell_indexes = set(self.getAllCoordsOf([0,1])) - set(self.getAllBorderCells())
+		cell_indexes = list(cell_indexes)
+		while self.isSolvable() == False: #or (self.getDensity() < low_threshold or self.getDensity() > high_threshold) or self.allAreConnected("path") == False or self.allAreConnected("wall") == False:
+			rnd = randint(0, len(cell_indexes)-1)
+			if self.maze[cell_indexes[rnd]] == 1:
+				self.maze[cell_indexes[rnd]] = 0
+			else:
+				self.maze[cell_indexes[rnd]] = 1
+
+	def reset(self, fill=1):
+		if fill==1:
+			self.maze = np.ones(dimensions)
+		else:
+			self.maze = np.zeros(dimensions)
 
 	def excludeExteriors(self, indexes):
 		result = []
@@ -199,13 +244,6 @@ class n_maze():
 
 		return (set(visitedPaths) == set(allPaths))
 
-	def getAllCoordsOf(self, types):
-		result = []
-		for index, val in np.ndenumerate(self.maze):
-			if self.maze[index] in types:
-				result.append(index)
-		return result
-
 	def allAreConnected(self, cell_type="path"):
 		visited = np.zeros(self.dimensions)
 		cell_pos = [1,2,3]
@@ -259,8 +297,8 @@ class n_maze():
 		self.printConnectedness()
 		self.printDensity()
 
-maze = n_maze([7, 15, 5])
+maze = n_maze([7, 7])
 # maze.densityIsland()
-# maze.monteCarloMaze(.3)
-maze.bruteForceMonteCarlo()
+# maze.bruteForceMonteCarlo()
+maze.bruteForceStep()
 maze.printMazeInfo()
