@@ -78,7 +78,7 @@ class n_maze():
 						self.maze[y_ + (y - y_) // 2, x_ + (x - x_) // 2] = 1
 						x, y = x_, y_
 
-	def populateRandomly(self, density=.1):
+	def monteCarloMaze(self, density=.1):
 		for index, x in np.ndenumerate(self.maze):
 			rnd = randint(0,100)
 			if rnd < 100*density:
@@ -114,7 +114,7 @@ class n_maze():
 	def addExit(self):
 		c = self.getBorderCell()
 		while (self.maze[c] == 2 or self.maze[c] == 3):
-			c = self.getBorderSquare()
+			c = self.getBorderCell()
 		self.maze[c] = 3
 
 	def addEntranceAndExit(self):
@@ -168,9 +168,6 @@ class n_maze():
 				break
 		return result
 
-		# forward
-		# return (self.__isSolvableRecursive(Coord(x+1,y), visited)) or (self.__isSolvableRecursive(Coord(x,y+1), visited)) or (self.__isSolvableRecursive(Coord(x-1,y), visited)) or (self.__isSolvableRecursive(Coord(x,y-1), visited))
-
 	def findEntrance(self):
 		for index, val in np.ndenumerate(self.maze):
 			if val == 2:
@@ -181,16 +178,89 @@ class n_maze():
 		visited = np.zeros(self.dimensions)
 		return self.__isSolvableRecursive(entrance, visited)
 
+	def __allAreConnectedRecursive(self, cell_index, visitedPaths, allPaths, visited, cell_type):
+		cell_pos = [1,2,3]
+		cell_neg = [0]
+		if cell_type == "path":
+			cell_pos = [0,2,3]
+			cell_neg = [1]
+		if (cell_index == None  or len(cell_index) != self.dimensionality):
+			return False
+		if visited[cell_index] == 1:
+			return False
+		elif self.maze[cell_index] in cell_neg:
+			return False
+		elif self.maze[cell_index] in cell_pos:
+			visited[cell_index] = 1
+			visitedPaths.append(cell_index)
+
+		for orth_index in self.getOrthogonalNeighbors(cell_index):
+			self.__allAreConnectedRecursive(orth_index, visitedPaths, allPaths, visited, cell_type)
+
+		return (set(visitedPaths) == set(allPaths))
+
+	def getAllCoordsOf(self, types):
+		result = []
+		for index, val in np.ndenumerate(self.maze):
+			if self.maze[index] in types:
+				result.append(index)
+		return result
+
+	def allAreConnected(self, cell_type="path"):
+		visited = np.zeros(self.dimensions)
+		cell_pos = [1,2,3]
+		if cell_type == "path":
+			cell_pos = [0,2,3]
+		allPos = self.getAllCoordsOf(cell_pos)
+		entrance = self.findEntrance()
+		visitedPaths = []
+		return self.__allAreConnectedRecursive(entrance, visitedPaths, allPos, visited, cell_type)
+
 	def printSolvability(self):
 		if self.isSolvable():
 			print("Solvable!")
 		else:
 			print("NOT solvable!")
 
-maze = n_maze([11, 21])
+	def printConnectedness(self):
+		if self.allAreConnected("path"):
+			print("All paths are connected!")
+		else:
+			print("NOT all paths are connected!")
+		if self.allAreConnected("wall"):
+			print("All walls are connected!")
+		else:
+			print("NOT all walls are connected!")
+
+	def getDensity(self):
+		cell = 0
+		wall = 0
+		for index, val in np.ndenumerate(self.maze):
+			if val == 1:
+				wall += 1
+			cell += 1
+		return float(wall) / float(cell)
+
+	def printDensity(self):
+		print("Density: {}".format(self.getDensity()))
+
+	def bruteForceMonteCarlo(self, low_threshold=0, high_threshold=1, paths_connect = True, walls_connect = True):
+		self.monteCarloMaze()
+		self.fillBorders()
+		self.addEntranceAndExit()
+		while self.isSolvable() == False or (self.getDensity() < low_threshold or self.getDensity() > high_threshold) or self.allAreConnected("path") == False or self.allAreConnected("wall") == False:
+			self.monteCarloMaze()
+			self.fillBorders()
+			self.addEntranceAndExit()
+
+	def printMazeInfo(self):
+		self.draw()
+		self.printSolvability()
+		self.printConnectedness()
+		self.printDensity()
+
+maze = n_maze([7, 15, 5])
 # maze.densityIsland()
-maze.populateRandomly(.1)
-maze.fillBorders()
-maze.addEntranceAndExit()
-maze.draw()
-maze.printSolvability()
+# maze.monteCarloMaze(.3)
+maze.bruteForceMonteCarlo()
+maze.printMazeInfo()
