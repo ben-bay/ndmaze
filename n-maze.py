@@ -41,6 +41,12 @@ class n_maze():
 						print(" ",  end="")
 				print("")
 
+	def getAllCells(self):
+		result = []
+		for index, val in np.ndenumerate(self.maze):
+			result.append(index)
+		return result
+
 	def fillBorders(self):
 		for index, val in np.ndenumerate(self.maze):
 			for i, dim in enumerate(index):
@@ -63,41 +69,154 @@ class n_maze():
 		self.addEntrance()
 		self.addExit()
 
+	def primMaze(self):
+		walls = []
+		visited = []
+		start = self.rndBorderCell()
+		print(start)
+		self.maze[start] = 0
+		visited.append(start)
+		neighbor_walls = self.getOrthogonalNeighbors(start)
+		walls += neighbor_walls
+		# Pick a cell, mark it as part of the maze. Add the walls of the cell to the wall list.
+		while len(walls) > 0:
+			print(len(walls))
+			# Pick a random wall from the list.
+			wall_num = randint(0,len(walls)-1)
+			rnd_wall = walls[wall_num]
+			neighbor_walls = self.getOrthogonalNeighbors(rnd_wall)
+			only_path = self.only1OrthVisited(neighbor_walls, visited)
+			# If only one of the two cells that the wall divides is visited, then:
+			if (only_path != -1):
+				# Make the wall a passage and mark the unvisited cell as part of the maze.
+				passage = self.getPassage(only_path, rnd_wall)
+				if (passage == None): # TODO consider allowing passage to be null
+					del walls[wall_num]
+					continue
+				# if passage in self.getAllCells():
+				visited.append(passage)
+				self.maze[passage] = 0
+				visited.append(rnd_wall)
+				self.maze[rnd_wall] = 0
+				# Add the neighboring walls of the cell to the wall list.
+				neighbor_walls = self.getOrthogonalNeighbors(passage)
+				unique_walls = set(neighbor_walls) - set(walls)
+				walls += list(unique_walls)
+			# Remove the wall from the list.
+			del walls[wall_num]
+
+	def getPassage(self, path, wall):
+		result = None
+		neighbors = self.getOrthogonalNeighbors(wall)
+		diff_dim = -1
+		direction = 0
+		for i in range(self.dimensionality):
+			if path[i] != wall[i]:
+				diff_dim = i
+				print("axis: {}".format(i))
+				direction = wall[i] - path[i]
+				print("direction: {}".format(direction))
+		result = list(path)
+		result[i] = result[i]+(direction*2) # why just plus? why not minus?
+
+		if (result in self.getAllBorderCells()) or (result not in self.getAllCells()):
+			return None
+		return result
+
+	def only1OrthVisited(self, neighbors, visited):
+		matches = 0
+		the_path = []
+		for index1 in neighbors:
+			# if (c1.x == 0 or c1.y == 0 or c1.x == length - 1 or c1.y == width - 1) return false
+			for index2 in visited:
+				if (index1 == index2):
+					matches += 1
+					the_path = index1
+		if matches == 1:
+			return the_path
+		return -1
+
 	def densityIsland(self, complexity=.5, density=.95): #TODO fix for n dimensions
-		# Only odd shapes
-		shape = list((x // 2) * 2 + 1 for x in self.dimensions)
+		# Assumes odd shape
 		# Adjust complexity and density relative to maze size
-		complexity = int(complexity * (5 * (sum(shape))))
-		density	= int(density * ((shape[0] // 2) * (shape[1] // 2)))
+		complexity = int(complexity * (5 * (sum(self.dimensions))))
+		product = 1
+		for dim in self.dimensions:
+			product *= (dim // 2)
+		density	= int(density * product)
 		# Build actual maze
-		self.maze = np.zeros(shape, dtype=bool)
+		self.maze = np.zeros(self.dimensions)
 		# Fill borders
 		self.fillBorders()
 		# Make aisles
 		for i in range(density):
-			# variables = list(randint(0, self.dimensions[1] // 2) * 2 for e in reversed(self.dimensions))
-			x, y = randint(0, shape[1] // 2) * 2, randint(0, shape[0] // 2) * 2
-			# self.maze[reversed(variables)] = 1
-			self.maze[y,x] = 1
+			variables = []
+			for x in reversed(self.dimensions):
+				variables.append(randint(0, x // 2) * 2)
+			print(variables)
+			print(self.maze)
+			# x, y = randint(0, shape[1] // 2) * 2, randint(0, shape[0] // 2) * 2
+			self.maze[list(reversed(variables))] = 1
+			print(self.maze)
+			# self.maze[y,x] = 1
 			for j in range(complexity):
 				neighbors = []
-				# for k in variables:
-				if x > 1:
-					neighbors.append((y, x - 2))
-				if x < shape[1] - 2:
-					neighbors.append((y, x + 2))
-				if y > 1:
-					neighbors.append((y - 2, x))
-				if y < shape[0] - 2:
-					neighbors.append((y + 2, x))
-				if len(neighbors):
-					# variables2 = neighbors[randint(0, len(neighbors) - 1)]
-					y_,x_ = neighbors[randint(0, len(neighbors) - 1)]
-					if self.maze[y_,x_] == 0:
-						self.maze[y_,x_] = 1
-						self.maze[y_ + (y - y_) // 2, x_ + (x - x_) // 2] = 1
-						x,y = x_,y_ # reversed(variables2)
+				for index, k in enumerate(variables):
+					if k > 1:
+						temp = list(reversed(variables))
+						temp[self.dimensionality-1-index] = temp[self.dimensionality-1-index]-2
+						neighbors.append(temp)
+					if k < self.dimensions[self.dimensionality-1-index] - 2:
+						temp = list(reversed(variables))
+						temp[self.dimensionality-1-index] = temp[self.dimensionality-1-index]+2
+						neighbors.append(temp)
+					if len(neighbors):
+						print(neighbors)
+						variables2 = neighbors[randint(0, len(neighbors) - 1)]
+						print(variables2)
+						print(self.maze)
+						print(self.maze[variables2])
+						if (self.maze[variables2] == 0):
+							self.maze[variables2] = 1
+							# self.maze[y_ + (y - y_) // 2, x_ + (x - x_) // 2] = 1
+							variables3 = []
+							for index, x in enumerate(variables):
+								variables3[index] = variables2[index] + (variables[self.dimensionality-1-index] - variables2[index]) // 2
+							self.maze[variables3] = 1
+							variables = reversed(variables2)
 		self.addEntranceAndExit()
+
+	def densityIsland2D(self, complexity=.5, density=.95):
+		# Only odd shapes
+		shape = ((self.dimensions[0] // 2) * 2 + 1, (self.dimensions[1] // 2) * 2 + 1)
+		# Adjust complexity and density relative to maze size
+		complexity = int(complexity * (5 * (shape[0] + shape[1])))
+		density	= int(density * ((shape[0] // 2) * (shape[1] // 2)))
+		# Build actual maze
+		self.maze = np.zeros(shape, dtype=bool)
+		# Fill borders
+		self.maze[0, :] = self.maze[-1, :] = 1
+		self.maze[:, 0] = self.maze[:, -1] = 1
+		# Make aisles
+		for i in range(density):
+			x, y = randint(0, shape[1] // 2) * 2, randint(0, shape[0] // 2) * 2
+			self.maze[y, x] = 1
+			for j in range(complexity):
+				neighbours = []
+				if x > 1:
+					neighbours.append((y, x - 2))
+				if x < shape[1] - 2:
+					neighbours.append((y, x + 2))
+				if y > 1:
+					neighbours.append((y - 2, x))
+				if y < shape[0] - 2:
+					neighbours.append((y + 2, x))
+				if len(neighbours):
+					y_,x_ = neighbours[randint(0, len(neighbours) - 1)]
+					if self.maze[y_, x_] == 0:
+						self.maze[y_, x_] = 1
+						self.maze[y_ + (y - y_) // 2, x_ + (x - x_) // 2] = 1
+						x, y = x_, y_
 
 	def monteCarloMaze(self, density=.1):
 		for index, x in np.ndenumerate(self.maze):
@@ -297,8 +416,9 @@ class n_maze():
 		self.printConnectedness()
 		self.printDensity()
 
-maze = n_maze([7, 7])
-# maze.densityIsland()
+maze = n_maze([17, 17])
+# maze.densityIsland2D()
 # maze.bruteForceMonteCarlo()
-maze.bruteForceStep()
+# maze.bruteForceStep()
+maze.primMaze()
 maze.printMazeInfo()
