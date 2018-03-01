@@ -23,7 +23,7 @@ class n_maze():
 						elif (self.maze[i][j][k] == 3):
 							print("F", end="")
 						else:
-							print(" ",  end="")
+							print(".",  end="")
 					print("")
 		elif self.dimensionality != 2:
 			print("Can only display 2D and 3D mazes in terminal.")
@@ -38,7 +38,7 @@ class n_maze():
 					elif (self.maze[i][j] == 3):
 						print("F", end="")
 					else:
-						print(" ",  end="")
+						print(".",  end="")
 				print("")
 
 	def getAllCells(self):
@@ -72,7 +72,7 @@ class n_maze():
 	def primMaze(self):
 		walls = []
 		visited = []
-		start = self.rndBorderCell()
+		start = self.rndBorderBorderCell()
 		print(start)
 		self.maze[start] = 0
 		visited.append(start)
@@ -80,28 +80,34 @@ class n_maze():
 		walls += neighbor_walls
 		# Pick a cell, mark it as part of the maze. Add the walls of the cell to the wall list.
 		while len(walls) > 0:
-			print(len(walls))
+			# print("")
+			# print(str(len(walls))+" walls")
 			# Pick a random wall from the list.
 			wall_num = randint(0,len(walls)-1)
 			rnd_wall = walls[wall_num]
 			neighbor_walls = self.getOrthogonalNeighbors(rnd_wall)
 			only_path = self.only1OrthVisited(neighbor_walls, visited)
 			# If only one of the two cells that the wall divides is visited, then:
-			if (only_path != -1):
+			if (only_path != -1 and rnd_wall not in self.getAllBorderCells()):
+				# print("Only 1 visited path!")
+				# print("wall: "+str(rnd_wall))
 				# Make the wall a passage and mark the unvisited cell as part of the maze.
 				passage = self.getPassage(only_path, rnd_wall)
-				if (passage == None): # TODO consider allowing passage to be null
-					del walls[wall_num]
-					continue
-				# if passage in self.getAllCells():
-				visited.append(passage)
-				self.maze[passage] = 0
+				# if (passage == None):
+				# 	print("Passage is null!")
+				# 	del walls[wall_num]
+				# 	continue
+				# print("Passage NOT null!")
+				if (passage != None):
+					visited.append(passage)
+					self.maze[passage] = 0
+					# Add the neighboring walls of the cell to the wall list.
+					neighbor_walls = self.getOrthogonalNeighbors(passage)
+					unique_walls = set(neighbor_walls) - set(walls)
+					# print("unique_walls length: "+str(len(unique_walls)))
+					walls += list(unique_walls)
 				visited.append(rnd_wall)
 				self.maze[rnd_wall] = 0
-				# Add the neighboring walls of the cell to the wall list.
-				neighbor_walls = self.getOrthogonalNeighbors(passage)
-				unique_walls = set(neighbor_walls) - set(walls)
-				walls += list(unique_walls)
 			# Remove the wall from the list.
 			del walls[wall_num]
 
@@ -113,13 +119,16 @@ class n_maze():
 		for i in range(self.dimensionality):
 			if path[i] != wall[i]:
 				diff_dim = i
-				print("axis: {}".format(i))
 				direction = wall[i] - path[i]
-				print("direction: {}".format(direction))
 		result = list(path)
-		result[i] = result[i]+(direction*2) # why just plus? why not minus?
+		result[diff_dim] = result[diff_dim]+(direction*2)
+		# print("passage: " + str(result))
+
+		result = tuple(result)
 
 		if (result in self.getAllBorderCells()) or (result not in self.getAllCells()):
+		# if (result not in self.getAllCells()):
+			# print("passage rejected")
 			return None
 		return result
 
@@ -132,6 +141,8 @@ class n_maze():
 				if (index1 == index2):
 					matches += 1
 					the_path = index1
+					if matches > 1:
+						break
 		if matches == 1:
 			return the_path
 		return -1
@@ -234,6 +245,14 @@ class n_maze():
 					border_cells.append(index)
 		return border_cells
 
+	def getAllOddBorderBorderCells(self):
+		border_cells = []
+		for index, val in np.ndenumerate(self.maze):
+			for i, dim in enumerate(index):
+				if (dim % 2 == 1) and (dim == self.dimensions[i] - 2 or dim == 1) and (0 not in index and self.dimensions[i] - 1 not in index):
+					border_cells.append(index)
+		return border_cells
+
 	def excludeCorners(self, indexes):
 		result = []
 		for cell_index in indexes:
@@ -251,6 +270,11 @@ class n_maze():
 		no_corners = self.excludeCorners(border_cells)
 		rnd = randint(0,len(no_corners)-1)
 		return no_corners[rnd]
+
+	def rndBorderBorderCell(self):
+		border_border_cells = self.getAllOddBorderBorderCells()
+		rnd = randint(0,len(border_border_cells)-1)
+		return border_border_cells[rnd]
 
 	def checkerboardMaze(self):
 		for index, x in np.ndenumerate(self.maze):
@@ -410,15 +434,31 @@ class n_maze():
 			self.fillBorders()
 			self.addEntranceAndExit()
 
+	# def bruteForceAssignEntraceAndExit(self, qualifications):
+	# 	bad = True
+	# 	while bad == True:
+	# 		self.fillBorders()
+	# 		self.addEntranceAndExit()
+	# 		for qualification in qualifications:
+	# 			bad = bad and (not qualification.__call__)
+
+	def bruteForceAssignEntraceAndExit(self):
+		self.fillBorders()
+		self.addEntranceAndExit()
+		while self.isSolvable() == False:
+			self.fillBorders()
+			self.addEntranceAndExit()
+
 	def printMazeInfo(self):
 		self.draw()
 		self.printSolvability()
 		self.printConnectedness()
 		self.printDensity()
 
-maze = n_maze([17, 17])
+maze = n_maze([5, 5, 5])
 # maze.densityIsland2D()
 # maze.bruteForceMonteCarlo()
 # maze.bruteForceStep()
 maze.primMaze()
+maze.bruteForceAssignEntraceAndExit()
 maze.printMazeInfo()
