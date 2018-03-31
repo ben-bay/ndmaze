@@ -248,8 +248,15 @@ class n_maze():
 	def getAllOddBorderBorderCells(self):
 		border_cells = []
 		for index, val in np.ndenumerate(self.maze):
+			good = True
 			for i, dim in enumerate(index):
-				if (dim % 2 == 1) and (dim == self.dimensions[i] - 2 or dim == 1) and (0 not in index and self.dimensions[i] - 1 not in index):
+				if (dim % 2 == 0):
+					good == False
+					break
+			if good == False:
+				continue
+			for i, dim in enumerate(index):
+				if (dim == self.dimensions[i] - 2 or dim == 1) and (0 not in index and self.dimensions[i] - 1 not in index):
 					border_cells.append(index)
 		return border_cells
 
@@ -455,7 +462,28 @@ class n_maze():
 		self.printConnectedness()
 		self.printDensity()
 
-maze = n_maze([5, 5, 5])
+	def __DijkstrasShortestPath(self, cell_index, visited, length):
+		if (cell_index == None or len(cell_index) != self.dimensionality):
+			return False
+		if self.maze[cell_index] == 1:
+			return False
+		elif visited[cell_index] == 1:
+			return False
+		elif self.maze[cell_index] == 3:
+			return True
+
+		length += 1
+		visited[cell_index] = 1
+
+		#recurse to orthogonal neighbors
+		result = False
+		for orth_index in self.getOrthogonalNeighbors(cell_index):
+			result = (result or self.__isSolvableRecursive(orth_index, visited))
+			if result == True:
+				break
+		return result
+
+maze = n_maze([7, 7, 7])
 # maze.densityIsland2D()
 # maze.bruteForceMonteCarlo()
 # maze.bruteForceStep()
