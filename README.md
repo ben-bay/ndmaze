@@ -4,6 +4,7 @@ Python scripts for generating mazes of 2 to n dimensions! Unity code is included
 
 ## Supported probabalistic maze algorithms
 • Prim
+```
 #S#################
 #...#.....#.....#.#
 #.#.#####.###.#.#.#
@@ -23,6 +24,7 @@ Python scripts for generating mazes of 2 to n dimensions! Unity code is included
 #######.###.#.#.###
 #.......#...#.#...#
 ######F############
+```
 
 • Kruskal
 
