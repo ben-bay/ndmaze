@@ -39,7 +39,7 @@ Python scripts for generating mazes of 2 to n dimensions! Unity code is included
 #.###.###.#.###.#.#
 #.#.#.....#.....#.#
 #.#.###.#.#.#####.#
-#.....#...#.#.#...#
+F.....#...#.#.#...#
 #.###.#####.#.#.#.#
 #.#...........#.#.#
 #.#.#######.###.#.#
@@ -47,6 +47,6 @@ Python scripts for generating mazes of 2 to n dimensions! Unity code is included
 #.#####.###.###.#.#
 #.....#.#.....#.#.#
 #######.#####.###.#
-#.................#
+S.................#
 ###################
 ```
