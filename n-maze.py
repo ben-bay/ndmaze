@@ -1,6 +1,7 @@
 import numpy as np
 from enum import Enum
-from random import *
+from random import randint
+import argparse
 
 class n_maze():
 	def __init__(self, dimensions):
@@ -483,7 +484,13 @@ class n_maze():
 				break
 		return result
 
+def args():
+	parser = argparse.ArgumentParser()
+	parser.add_argument("make")
+	args = parser.parse_args()
+
 def main():
+	args()
 	maze = n_maze([7, 7, 7])
 	# maze.densityIsland2D()
 	# maze.bruteForceMonteCarlo()
