@@ -486,7 +486,10 @@ class n_maze():
 
 def args():
 	parser = argparse.ArgumentParser()
-	parser.add_argument("make")
+	subparsers = parser.add_subparsers(help='sub-command help')
+	make = parser_a = subparsers.add_parser("make", help="make a maze")
+	make.add_argument("-e", "--entrance_exit", action='store_true', help="include entrance and exit")
+	make.add_argument("dimensions", metavar='N', type=int, nargs='+')
 	args = parser.parse_args()
 
 def main():
