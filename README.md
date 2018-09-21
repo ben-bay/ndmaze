@@ -1,6 +1,9 @@
-# n-dimensional-mazes
+# ndmazes
 
-Python scripts for generating mazes of 2 to n dimensions! Unity code is included for 3D visualization.
+Python tool for generating mazes of 2 to n dimensions!
+
+To make a 7x7x7 3-dimensional maze with a randomized Prim's algorithm:
+```ndmaze make -e -i prim 7 7 7```
 
 ## Supported probabalistic maze algorithms
 • Prim
