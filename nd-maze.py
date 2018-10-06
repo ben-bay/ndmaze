@@ -14,5 +14,7 @@ class graph(nd_maze):
         def __init__(self, dimensions):
                 self.maze = dict() 
 
+        def __init__(self, dimensions, dict):
+                self.maze = dict
 
 

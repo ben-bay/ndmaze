@@ -4,6 +4,7 @@ import numpy as np
 from enum import Enum
 from random import randint
 import argparse
+import sys
 
 class n_maze():
     def __init__(self, dimensions):
@@ -518,4 +519,4 @@ def main():
 #    maze.printMazeInfo()
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
