@@ -1,6 +1,8 @@
 
 clean-pyc:
-	find . -name '*.pyc' -exec rm --force {} + find . -name '*.pyo' -exec rm --force {} + name '*~' -exec rm --force  {} 
+	find . -name '*.pyc' -exec rm '{}' +
+	find . -name '*.pyo' -exec rm '{}' +
+	#name '*~' -exec rm '{}' 
 
 install:
 	( \
@@ -11,3 +13,12 @@ install:
 
 test: clean-pyc
 	py.test
+
+lint:
+	( \
+		source venv/bin/activate; \
+		flake8 src; \
+	)
+
+update:
+	git pull; install
