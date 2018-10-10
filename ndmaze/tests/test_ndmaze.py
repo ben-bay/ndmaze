@@ -1,7 +1,11 @@
-#import pytest
+import sys
+sys.path.insert(0, '../')
+sys.path.insert(0, '../src/')
+from .context import ndmaze as n
+print(sys.path)
+
 import numpy as np
 
-import ndmaze as n
 
 def test_fillBorders():
     maze = n.matrix(2, np.zeros(10,10))
