@@ -1,3 +1,4 @@
+#! /usr/bin/env python3  
 
 import numpy as np
 from enum import Enum
@@ -31,10 +32,13 @@ class nd_maze():
         self.algo()
 
 
-class matrix(nd_maze)
-    def __init__(self, dimensions):
-        super().__init__(self, dimensions)
-        self.maze = np.ones(dimensions)
+class matrix(nd_maze):
+    def __init__(self, dimensions, init=None):
+        super().__init__(dimensions)
+        if init == None:
+            self.maze = np.ones(dimensions)
+        else:
+            self.maze = init
 
 
     def draw(self):
@@ -53,7 +57,7 @@ class matrix(nd_maze)
                             print(".",  end="")
                     print("")
         elif self.dimensionality != 2:
-            print("Can only display 2D and 3D mazes in terminal.")
+            print("Requested {}d maze. Can only display 2d and 3d mazes in terminal.".format(self.dimensionality))
         else:
             print("")
             for i in range(self.dimensions[0]):
@@ -343,49 +347,50 @@ class matrix(nd_maze)
             return result
 
 
-        def bruteForceStep(self, low_threshold=0, high_threshold=1, paths_connect = True, walls_connect = True):
-            self.checkerboardMaze()
-            self.fillBorders()
-            self.addEntranceAndExit()
-            cell_indexes = set(self.getAllCoordsOf([0,1])) - set(self.getAllBorderCells())
-            cell_indexes = list(cell_indexes)
-            while self.isSolvable() == False: #or (self.getDensity() < low_threshold or self.getDensity() > high_threshold) or self.allAreConnected("path") == False or self.allAreConnected("wall") == False:
-                rnd = randint(0, len(cell_indexes)-1)
-                if self.maze[cell_indexes[rnd]] == 1:
-                    self.maze[cell_indexes[rnd]] = 0
-                else:
-                    self.maze[cell_indexes[rnd]] = 1
-
-        def reset(self, fill=1):
-            if fill==1:
-                self.maze = np.ones(dimensions)
+    def bruteForceStep(self, low_threshold=0, high_threshold=1, paths_connect = True, walls_connect = True):
+        self.checkerboardMaze()
+        self.fillBorders()
+        self.addEntranceAndExit()
+        cell_indexes = set(self.getAllCoordsOf([0,1])) - set(self.getAllBorderCells())
+        cell_indexes = list(cell_indexes)
+        while self.isSolvable() == False: #or (self.getDensity() < low_threshold or self.getDensity() > high_threshold) or self.allAreConnected("path") == False or self.allAreConnected("wall") == False:
+            rnd = randint(0, len(cell_indexes)-1)
+            if self.maze[cell_indexes[rnd]] == 1:
+                self.maze[cell_indexes[rnd]] = 0
             else:
-                self.maze = np.zeros(dimensions)
+                self.maze[cell_indexes[rnd]] = 1
 
 
-        def excludeExteriors(self, indexes):
-            result = []
-            for cell_index in indexes:
-                cell_is_exterior = False
-                for i, index_num in enumerate(cell_index):
-                    if index_num < 0 or index_num >= self.dimensions[i]:
-                        cell_is_exterior = True
-                        break
-                if cell_is_exterior == False:
-                    result.append(cell_index)
-            return result
+    def reset(self, fill=1):
+        if fill==1:
+            self.maze = np.ones(dimensions)
+        else:
+            self.maze = np.zeros(dimensions)
 
 
-        def getOrthogonalNeighbors(self, cell_index):
-            orthogonal_directions = []
-            for i, element in enumerate(cell_index):
-                temp1 = list(cell_index)
-                temp1[i] = element + 1
-                temp2 = list(cell_index)
-                temp2[i] = element - 1
-                orthogonal_directions.append(tuple(temp1))
-                orthogonal_directions.append(tuple(temp2))
-            return self.excludeExteriors(orthogonal_directions)
+    def excludeExteriors(self, indexes):
+        result = []
+        for cell_index in indexes:
+            cell_is_exterior = False
+            for i, index_num in enumerate(cell_index):
+                if index_num < 0 or index_num >= self.dimensions[i]:
+                    cell_is_exterior = True
+                    break
+            if cell_is_exterior == False:
+                result.append(cell_index)
+        return result
+
+
+    def getOrthogonalNeighbors(self, cell_index):
+        orthogonal_directions = []
+        for i, element in enumerate(cell_index):
+            temp1 = list(cell_index)
+            temp1[i] = element + 1
+            temp2 = list(cell_index)
+            temp2[i] = element - 1
+            orthogonal_directions.append(tuple(temp1))
+            orthogonal_directions.append(tuple(temp2))
+        return self.excludeExteriors(orthogonal_directions)
 
 
     def getAdjacentNeighbors(self, cell_index):
