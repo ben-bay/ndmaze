@@ -39,13 +39,6 @@ def parse_args(args):
 def main():
     args = setup_argparse()
     parse_args(args)
-    #maze = n_maze([7, 7, 7])
-    # maze.densityIsland2D()
-    # maze.bruteForceMonteCarlo()
-    # maze.bruteForceStep()
-#    maze.primMaze()
-#    maze.bruteForceAssignEntraceAndExit()
-#    maze.printMazeInfo()
 
 if __name__ == "__main__":
     return sys.exit(main()) 
