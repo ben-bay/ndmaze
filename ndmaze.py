@@ -3,6 +3,7 @@ import numpy as np
 from enum import Enum
 from random import randint
 import argparse
+import sys
 
 import maze_utils
 
